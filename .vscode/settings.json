@@ -1,0 +1,14 @@
+// Workspace settings
+{
+    "files.exclude": {
+        // Django
+        "**/__pycache__": true,
+        "**/__init__.py": true,
+
+        // React
+        "**/node_modules": true,
+        "*/package-lock.json":true
+
+    },
+    "python.analysis.typeCheckingMode": "basic"
+}
