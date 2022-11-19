@@ -11,7 +11,7 @@ const groupSchema = new mongoose.Schema(
     admin: { type: ObjectId, ref: "User" },
     participants: [{ type: ObjectId, ref: "User" }],
 
-    image: String,
+    imageName: String,
   },
 
   {

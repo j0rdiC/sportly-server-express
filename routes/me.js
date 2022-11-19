@@ -17,9 +17,7 @@ router
     })
   )
   .put(auth, async (req, res) => {
-    const user = await User.findByIdAndUpdate(req.user._id, req.body, {
-      new: true,
-    })
+    const user = await User.findByIdAndUpdate(req.user._id, req.body, { new: true })
     return res.json(user)
   })
 

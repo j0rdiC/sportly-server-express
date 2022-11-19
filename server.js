@@ -1,5 +1,4 @@
 const express = require("express")
-const multer = require("multer")
 const cors = require("cors")
 const morgan = require("morgan")
 const mongoose = require("mongoose")
@@ -50,9 +49,17 @@ app.use("/api/users", users)
 app.use("/api/groups", groups)
 
 // S3 Bucket
-const { S3Client, PutObjectCommand } = require("@aws-sdk/client-s3")
+const {
+  S3Client,
+  PutObjectCommand,
+  GetObjectCommand,
+} = require("@aws-sdk/client-s3")
+const { getSignedUrl } = require("@aws-sdk/s3-request-presigner")
+
+const multer = require("multer")
 const crypto = require("crypto")
 const sharp = require("sharp")
+const { Group } = require("./models/group")
 
 const bucketName = process.env.AWS_BUCKET_NAME
 const region = process.env.AWS_BUCKET_REGION
@@ -71,9 +78,9 @@ const storage = multer.memoryStorage()
 const upload = multer({ storage })
 
 app.put("/api/groups/:id/image", upload.single("image"), async (req, res) => {
-  console.log(req.file)
+  console.log(`1 - Upload group image req: ${req.body.name}`)
 
-  const generateImgKey = (bytes = 8) =>
+  const generateImgName = (bytes = 16) =>
     crypto.randomBytes(bytes).toString("hex")
 
   // resize image
@@ -81,25 +88,86 @@ app.put("/api/groups/:id/image", upload.single("image"), async (req, res) => {
     .resize({ height: 1920, width: 1080, fit: "contain" })
     .toBuffer()
 
-  const image = generateImgKey()
+  const imageName = req.body.name + generateImgName()
 
   const params = {
     Bucket: bucketName,
-    Key: image,
-    Body: buffer,
+    Key: imageName,
+    Body: req.file.buffer,
     ContentType: req.file.mimetype,
   }
 
-  try {
-    await s3.send(new PutObjectCommand(params))
-    return res.sendStatus(200)
-  } catch (err) {
-    console.error(err)
-    res.sendStatus(500)
+  console.log("2 - Calling S3")
+  await s3.send(new PutObjectCommand(params))
+  console.log("3 - S3 done, calling DB")
+  const group = await Group.create({ ...req.body, imageName })
+  console.log("4 - DB done, sending res...")
+  return res.json(group)
+})
+
+app.get("/api/groups/aws", async (req, res) => {
+  const groups = await Group.find().lean() //.populate("participants", ["_id", "email"])
+
+  for (const group of groups) {
+    const getObjectParams = {
+      Bucket: bucketName,
+      Key: group.imageName,
+    }
+    const command = new GetObjectCommand(getObjectParams)
+    const url = await getSignedUrl(s3, command, { expiresIn: 3600 })
+    group.imageUrl = url
   }
+
+  return res.json(groups)
 })
 
 app.use(error)
+
+// DB Testing
+
+// update relationship
+async function updateRp() {
+  const group = await Group.findOne().populate("participants", ["_id", "email"])
+  group.participants[0].email = "admin@m.com"
+  group.participants[0].save((error) => error && console.log(error))
+  console.log(group)
+}
+
+//updateRp()
+
+// add fiels in response
+async function addField() {
+  const groups = await Group.find().lean()
+
+  // groups.forEach(async (group) => {
+  //   const getObjectParams = {
+  //     Bucket: bucketName,
+  //     Key: group.imageName,
+  //   }
+  //   const command = new GetObjectCommand(getObjectParams)
+  //   // getSignedUrl(s3, command, { expiresIn: 3600 }).then((url) => {
+  //   //   console.log(url)
+  //   // })
+  //   const url = await getSignedUrl(s3, command, { expiresIn: 3600 })
+
+  //   group.url = url
+  //   console.log(group)
+  // })
+
+  for (const group of groups) {
+    const getObjectParams = {
+      Bucket: bucketName,
+      Key: group.imageName,
+    }
+    const command = new GetObjectCommand(getObjectParams)
+    const url = await getSignedUrl(s3, command, { expiresIn: 3600 })
+    group.url = url
+  }
+
+  console.log(groups)
+}
+
+// addField()
 
 // MongoDB connection
 mongoose

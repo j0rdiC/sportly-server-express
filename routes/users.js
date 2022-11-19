@@ -9,8 +9,7 @@ const handleTokens = require("../utils/handleTokens")
 
 const router = express.Router()
 
-const notFound = (res) =>
-  res.status(404).json({ message: "No user found with the given ID." })
+const notFound = (res) => res.status(404).json({ message: "No user found with the given ID." })
 
 // List
 router.get("/", async (req, res) => {
@@ -49,9 +48,7 @@ router
   })
 
   .put(auth, async (req, res) => {
-    const user = await User.findByIdAndUpdate(req.user._id, req.body, {
-      new: true,
-    })
+    const user = await User.findByIdAndUpdate(req.user._id, req.body, { new: true })
     return res.json({ _id: user._id, _updatedAt: user._updatedAt, ...req.body })
   })
 

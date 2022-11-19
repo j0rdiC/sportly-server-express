@@ -14,6 +14,7 @@ const userSchema = new mongoose.Schema(
     gender: { type: String, enum: ["male", "female"] },
     groupPreference: { type: String, enum: ["friendly", "competitive"] },
     isPremium: Boolean,
+
     isAdmin: { type: Boolean, default: false },
     refreshToken: String,
   },
@@ -27,17 +28,11 @@ const userSchema = new mongoose.Schema(
 )
 
 userSchema.methods.generateAccessToken = function () {
-  return jwt.sign(
-    { _id: this._id, isAdmin: this.isAdmin },
-    process.env.JWT_KEY,
-    { expiresIn: "1d" }
-  )
+  return jwt.sign({ _id: this._id, isAdmin: this.isAdmin }, process.env.JWT_KEY, { expiresIn: "1d" })
 }
 
 userSchema.methods.generateRefreshToken = function () {
-  const token = jwt.sign({ _id: this._id }, process.env.JWT_KEY, {
-    expiresIn: "90d",
-  })
+  const token = jwt.sign({ _id: this._id }, process.env.JWT_KEY, { expiresIn: "90d" })
   return token
 }
 
