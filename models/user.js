@@ -1,6 +1,6 @@
-const mongoose = require("mongoose")
-const Joi = require("joi")
-const jwt = require("jsonwebtoken")
+const mongoose = require('mongoose')
+const Joi = require('joi')
+const jwt = require('jsonwebtoken')
 
 const userSchema = new mongoose.Schema(
   {
@@ -11,8 +11,8 @@ const userSchema = new mongoose.Schema(
     phone: String,
     birthDate: Date,
     location: String,
-    gender: { type: String, enum: ["male", "female"] },
-    groupPreference: { type: String, enum: ["friendly", "competitive"] },
+    gender: { type: String, enum: ['male', 'female'] },
+    groupPreference: { type: String, enum: ['friendly', 'competitive'] },
     isPremium: Boolean,
 
     isAdmin: { type: Boolean, default: false },
@@ -21,18 +21,18 @@ const userSchema = new mongoose.Schema(
 
   {
     timestamps: {
-      createdAt: "_createdAt",
-      updatedAt: "_updatedAt",
+      createdAt: '_createdAt',
+      updatedAt: '_updatedAt',
     },
   }
 )
 
 userSchema.methods.generateAccessToken = function () {
-  return jwt.sign({ _id: this._id, isAdmin: this.isAdmin }, process.env.JWT_KEY, { expiresIn: "1d" })
+  return jwt.sign({ _id: this._id, isAdmin: this.isAdmin }, process.env.JWT_KEY, { expiresIn: '1d' })
 }
 
 userSchema.methods.generateRefreshToken = function () {
-  const token = jwt.sign({ _id: this._id }, process.env.JWT_KEY, { expiresIn: "90d" })
+  const token = jwt.sign({ _id: this._id }, process.env.JWT_KEY, { expiresIn: '90d' })
   return token
 }
 
@@ -44,5 +44,5 @@ const validateUser = (email, password) => {
   return schema.validate({ email, password })
 }
 
-exports.User = mongoose.model("User", userSchema)
+exports.User = mongoose.model('User', userSchema)
 exports.validate = validateUser

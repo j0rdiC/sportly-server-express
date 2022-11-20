@@ -1,4 +1,4 @@
-const { Group } = require("../models/group")
+const { Group } = require('../models/group')
 
 module.exports = () => {
   const getOne = async () => {
@@ -8,8 +8,8 @@ module.exports = () => {
   // getOne()
 
   async function updateRp() {
-    const group = await Group.findOne().populate("participants", ["_id", "email"])
-    group.participants[0].email = "admin@m.com"
+    const group = await Group.findOne().populate('participants', ['_id', 'email'])
+    group.participants[0].email = 'admin@m.com'
     group.participants[0].save((error) => error && console.log(error))
     console.log(group)
   }

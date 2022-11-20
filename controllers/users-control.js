@@ -1,14 +1,14 @@
-const _ = require("lodash")
-const { User, validate } = require("../models/user")
+const _ = require('lodash')
+const { User, validate } = require('../models/user')
 
 const listUsers = async (req, res) => {
-  const users = await User.find().select("-password")
+  const users = await User.find()
   return res.json(users)
 }
 
 const getUser = async (req, res) => {
   const user = await User.findById(req.user._id)
-  return res.json(_.pick(user, ["_id", "email", "firstName", "lastName", "_createdAt"]))
+  return res.json(_.pick(user, ['_id', 'email', 'firstName', 'lastName', '_createdAt']))
 }
 
 const updateUser = async (req, res) => {

@@ -1,5 +1,3 @@
-const notFound = (res) => res.status(404).json({ message: "The given ID was not found." })
-
 const list = (Doc) => async (req, res) => {
   const query = await Doc.find()
   return res.json(query)
@@ -22,7 +20,7 @@ const updateOne = (Doc) => async (req, res) => {
 
 const removeOne = (Doc) => async (req, res) => {
   await Doc.findByIdAndDelete(req.params.id)
-  return res.status(204).send("Deleted")
+  return res.status(204).send('Deleted')
 }
 
 module.exports = { list, getOne, createOne, updateOne, removeOne }

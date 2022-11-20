@@ -1,5 +1,5 @@
-const { S3Client, GetObjectCommand, PutObjectCommand, DeleteObjectCommand } = require("@aws-sdk/client-s3")
-const { getSignedUrl } = require("@aws-sdk/s3-request-presigner")
+const { S3Client, GetObjectCommand, PutObjectCommand, DeleteObjectCommand } = require('@aws-sdk/client-s3')
+const { getSignedUrl } = require('@aws-sdk/s3-request-presigner')
 
 const bucketName = process.env.AWS_BUCKET_NAME
 const region = process.env.AWS_BUCKET_REGION
@@ -14,7 +14,7 @@ const s3Client = new S3Client({
   },
 })
 
-exports.getObjectSignedUrl = async (key) => {
+const getObjectSignedUrl = async (key) => {
   const params = {
     Bucket: bucketName,
     Key: key,
@@ -26,7 +26,7 @@ exports.getObjectSignedUrl = async (key) => {
   return url
 }
 
-exports.uploadFile = (fileBuffer, fileName, mimetype) => {
+const uploadFile = (fileBuffer, fileName, mimetype) => {
   const uploadParams = {
     Bucket: bucketName,
     Body: fileBuffer,
@@ -36,10 +36,12 @@ exports.uploadFile = (fileBuffer, fileName, mimetype) => {
   return s3Client.send(new PutObjectCommand(uploadParams))
 }
 
-exports.deleteFile = (fileName) => {
+const deleteFile = (fileName) => {
   const deleteParams = {
     Bucket: bucketName,
     Key: fileName,
   }
   return s3Client.send(new DeleteObjectCommand(deleteParams))
 }
+
+module.exports = { getObjectSignedUrl, uploadFile, deleteFile }
