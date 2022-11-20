@@ -1,7 +1,7 @@
 const crypto = require("crypto")
 const sharp = require("sharp")
 const { Group } = require("../models/group")
-const handler = require("../utils/request-handler")
+const handler = require("./request-handler")
 const { getObjectSignedUrl, uploadFile, deleteFile } = require("../utils/s3")
 
 const generateFileName = (bytes = 8) => crypto.randomBytes(bytes).toString("hex")
@@ -36,4 +36,14 @@ const deleteGroup = async (req, res) => {
   return res.sendStatus(204)
 }
 
-module.exports = { listGroups, createGroup, getGroup, updateGroup, deleteGroup }
+const joinGroup = async (req, res) => {
+  const group = await Group.findByIdAndUpdate(req.params.id, { $push: { participants: req.user._id } })
+  return res.json({ message: `Group ${group.name} joined!` })
+}
+
+const leaveGroup = async (req, res) => {
+  const group = await Group.findByIdAndUpdate(req.params.id, { $pull: { participants: req.user._id } })
+  return res.json({ message: `Group ${group.name} exited!` })
+}
+
+module.exports = { listGroups, createGroup, getGroup, updateGroup, deleteGroup, joinGroup, leaveGroup }

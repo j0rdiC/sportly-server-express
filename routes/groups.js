@@ -1,48 +1,35 @@
-const express = require("express")
-const handler = require("../utils/request-handler")
-const { Group } = require("../models/group")
-const auth = require("../middleware/auth")
-const multer = require("multer")
-
+const express = require('express')
+const auth = require('../middleware/auth')
+const multer = require('multer')
 const {
   listGroups,
   createGroup,
   getGroup,
   updateGroup,
   deleteGroup,
-} = require("../controllers/groups-control")
-const admin = require("../middleware/admin")
+  joinGroup,
+  leaveGroup,
+} = require('../controllers/groups-control')
 
 const router = express.Router()
 
 const storage = multer.memoryStorage()
 const upload = multer({ storage: storage })
 
-router.get("/handler", handler.list(Group))
-
-router
-  .route("/")
+// prettier-ignore
+router.route('/')
   .get(listGroups)
-  .post([auth, upload.single("image")], createGroup)
+  .post([auth, upload.single('image')], createGroup)
 
-router
-  .route("/:id")
+// prettier-ignore
+router.route('/:id')
   .get(getGroup)
   .put(updateGroup)
-
   .delete(deleteGroup)
 
-// Leave - join
-router
-  .route("/:id/join")
-  .put(async (req, res) => {
-    const group = await Group.findByIdAndUpdate(req.params.id, { $push: { participants: req.user._id } })
-    return res.json({ message: `Group ${group.name} joined!` })
-  })
-
-  .delete(auth, async (req, res) => {
-    const group = await Group.findByIdAndUpdate(req.params.id, { $pull: { participants: req.user._id } })
-    return res.json({ message: `Group ${group.name} exited!` })
-  })
+// prettier-ignore
+router.route('/:id/join')
+  .put(auth, joinGroup)
+  .delete(auth, leaveGroup)
 
 module.exports = router

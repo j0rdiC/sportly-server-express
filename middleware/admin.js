@@ -3,8 +3,6 @@
 // 403 Forbidden -> verified token but not allowed - dont try again, no access to resource
 
 module.exports = (req, res, next) => {
-  if (!req.user.isAdmin)
-    return res.status(403).json({ message: "Access denied." })
-
+  if (!req.user.isAdmin) return res.status(403).json({ message: "Access denied." })
   next()
 }
