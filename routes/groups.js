@@ -1,6 +1,6 @@
-const express = require('express')
+const router = require('express').Router()
 const auth = require('../middleware/auth')
-const multer = require('multer')
+const { image } = require('../middleware/img-upload')
 const {
   listGroups,
   createGroup,
@@ -10,22 +10,18 @@ const {
   joinGroup,
   leaveGroup,
 } = require('../controllers/groups-control')
-
-const router = express.Router()
-
-const storage = multer.memoryStorage()
-const upload = multer({ storage: storage })
+const validateId = require('../middleware/validate-id')
 
 // prettier-ignore
 router.route('/')
   .get(listGroups)
-  .post([auth, upload.single('image')], createGroup)
+  .post([auth, image], createGroup)
 
 // prettier-ignore
 router.route('/:id')
-  .get(getGroup)
-  .put(updateGroup)
-  .delete(deleteGroup)
+  .get(validateId ,getGroup)
+  .put([auth, image], updateGroup)
+  .delete(auth, deleteGroup)
 
 // prettier-ignore
 router.route('/:id/join')

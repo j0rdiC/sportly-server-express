@@ -1,4 +1,4 @@
-const { Group } = require('../models/group')
+const Group = require('../../../models/group')
 
 module.exports = () => {
   const getOne = async () => {

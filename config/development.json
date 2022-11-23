@@ -1,0 +1,8 @@
+{
+  "name": "Sportly App @ development",
+  "dbName": "sportly",
+  "mail": {
+    "host": "host@mail.com",
+    "pass": "xxx"
+  }
+}

@@ -1,12 +1,15 @@
 const mongoose = require('mongoose')
 const winston = require('winston')
-require('dotenv').config()
+const config = require('config')
+const debug = require('debug')('app:startup')
 
 module.exports = () => {
+  const dbName = config.get('dbName')
+
   mongoose
-    .connect(process.env.MONGODB_URI)
-    .then(() => {
-      winston.info('Connection to MongoDB established', console.log('Connection to MongoDB established'))
-    })
-    .catch((err) => console.error(err))
+    .connect(config.get('db'), { dbName })
+    .then(() =>
+      winston.info('Connection to MongoDB established', debug(`Connection to MongoDB/${dbName} established.`))
+    )
+    .catch((err) => debug(err))
 }

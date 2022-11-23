@@ -1,7 +1,7 @@
-require('dotenv').config()
+const config = require('config')
 
 module.exports = () => {
-  if (!process.env.JWT_KEY) {
+  if (!config.get('jwtKey')) {
     console.error('FATAL ERROR: jwt-private-key is not defined.')
     throw new Error('jwt')
     // process.exit(1)

@@ -1,12 +1,13 @@
-const mongoose = require('mongoose')
-const ObjectId = mongoose.Schema.Types.ObjectId
+const { Schema, model } = require('mongoose')
+const { ObjectId } = Schema.Types
+const Joi = require('joi')
 
-const groupSchema = new mongoose.Schema(
+const groupSchema = Schema(
   {
     name: String,
     location: String,
     level: { type: String, enum: ['begginer', 'amateur', 'pro'] },
-    type: { type: String, enum: ['frienldy', 'competitive'] },
+    type: { type: String, enum: ['friendly', 'competitive'] },
     isPrivate: { type: Boolean, default: false },
     admin: { type: ObjectId, ref: 'User' },
     participants: [{ type: ObjectId, ref: 'User' }],
@@ -22,4 +23,10 @@ const groupSchema = new mongoose.Schema(
   }
 )
 
-exports.Group = mongoose.model('Group', groupSchema)
+const Group = model('Group', groupSchema)
+
+const validate = (group) => {
+  const schema = {}
+}
+
+module.exports = { Group }

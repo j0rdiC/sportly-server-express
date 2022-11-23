@@ -4,9 +4,9 @@ const auth = require('../routes/auth')
 const groups = require('../routes/groups')
 
 module.exports = (app) => {
-  app.get('/', (req, res) => res.send('Hello'))
+  app.get('/', (req, res) => res.render('index', { title: 'Sportly App', message: 'Hello' }))
 
-  app.use('/auth', auth)
+  app.use('/api/auth', auth)
   app.use('/api/users', users)
   app.use('/api/groups', groups)
 

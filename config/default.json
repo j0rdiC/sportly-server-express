@@ -1,0 +1,9 @@
+{
+  "name": "Sportly App @ development",
+  "dbName": "sportly",
+  "jwtKey": "insecureKey",
+  "mail": {
+    "host": "host@mail.com",
+    "pass": "xxxx"
+  }
+}
