@@ -18,10 +18,7 @@ const userSchema = new Schema(
     isPremium: { type: Boolean, default: false },
     isAdmin: { type: Boolean, default: false },
 
-    refreshToken: {
-      iv: String,
-      content: String,
-    },
+    refreshToken: String,
   },
 
   {
@@ -38,12 +35,27 @@ const userSchema = new Schema(
             isAdmin: this.isAdmin,
           },
           config.get('jwtAKey'),
-          { expiresIn: '7d' }
+          { expiresIn: '30s' }
         )
       },
 
-      generateRefreshToken: function () {
-        return jwt.sign({ _id: this._id }, config.get('jwtRKey'), { expiresIn: '90d' })
+      // calling .save() works without async/await and takes 150ms
+      // when using async/await it takes 200ms
+      // .save() requires async/await when called from a controller
+
+      // calling .updateOne() requires async/await and takes 200ms
+      // why?
+
+      // create new table for refresh tokens? better for deleting after certain time with mongo TTL
+      // or just delete the refresh token from the user document with cron job? better for performance
+
+      generateRefreshToken: async function () {
+        const token = jwt.sign({ _id: this._id }, config.get('jwtRKey'), { expiresIn: '90d' })
+
+        this.refreshToken = token
+        await this.save()
+
+        return token
       },
     },
   }

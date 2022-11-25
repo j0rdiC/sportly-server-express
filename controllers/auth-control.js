@@ -5,6 +5,7 @@ const { User, validate } = require('../models/user')
 const { validationErr } = require('./request-handler')
 const config = require('config')
 const { encrypt, decrypt } = require('../utils/hash')
+const capitalize = require('../utils/capitalize')
 
 const registerUser = async (req, res) => {
   const { email, password } = req.body
@@ -15,9 +16,9 @@ const registerUser = async (req, res) => {
   if (user) return res.status(400).send({ message: 'User already registered.' })
 
   const salt = await bcrypt.genSalt(10)
-  const hashedPass = await bcrypt.hash(password, salt)
+  const hashed = await bcrypt.hash(password, salt)
 
-  user = new User({ email, password: hashedPass })
+  user = new User({ email, password: hashed })
   await user.save()
 
   res.status(201).send(_.pick(user, ['_id', 'email']))
@@ -38,30 +39,22 @@ const loginUser = async (req, res) => {
   if (!valid) return invalidAuth()
 
   const access = user.generateAccessToken()
-  const refresh = user.generateRefreshToken()
+  const refresh = await user.generateRefreshToken()
 
-  const hashed = encrypt(refresh)
-  await user.updateOne({ refreshToken: hashed })
-
-  res.send({ access, refresh: hashed })
+  res.send({ access, refresh })
 }
 
 const refreshUser = async (req, res) => {
-  const refreshToken = decrypt(req.body.refresh)
-
-  jwt.verify(refreshToken, config.get('jwtRKey'), async (err, decoded) => {
-    if (err) return res.status(401).send({ message: err.message })
+  jwt.verify(req.body.refresh, config.get('jwtRKey'), async (err, decoded) => {
+    if (err) return res.status(403).send({ message: `Refresh ${capitalize(err.message)}.` })
 
     const user = await User.findById(decoded._id)
-    if (!user) return res.status(401).send({ message: 'Invalid token.' })
+    if (!user) return res.status(403).send({ message: 'Invalid refresh token.' })
 
     const access = user.generateAccessToken()
-    const refresh = user.generateRefreshToken()
+    const refresh = await user.generateRefreshToken()
 
-    const hashed = encrypt(refresh)
-    await user.updateOne({ refreshToken: hashed })
-
-    return res.send({ access, refresh: hashed })
+    return res.send({ access, refresh })
   })
 }
 

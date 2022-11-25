@@ -29,7 +29,10 @@ const validate = (group) => {
   const schema = Joi.object({
     name: Joi.string().required(),
     type: Joi.string().valid('friendly', 'competitive'),
-    admin: Joi.objectId(),
+    location: Joi.string(),
+    level: Joi.string().valid('begginer', 'amateur', 'pro'),
+    isPrivate: Joi.boolean(),
+    imageName: Joi.string(),
   })
 
   return schema.validate(group)

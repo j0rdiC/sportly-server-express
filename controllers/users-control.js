@@ -28,7 +28,7 @@ const updateUser = async (req, res) => {
   let imageName
 
   if (req.file?.buffer) {
-    imageName = !user.imageName ? user.firstName + user.lastName + generateFileName() : user.imageName
+    imageName = !user.imageName ? req.body.firstName + req.body.lastName + generateFileName() : user.imageName
     await uploadFile(req.file.buffer, imageName, req.file.mimetype)
 
     debug('s3 done, updating DB')

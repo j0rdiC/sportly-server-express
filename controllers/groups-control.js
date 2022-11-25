@@ -3,11 +3,12 @@ const handler = require('./request-handler')
 const { Group, validate } = require('../models/group')
 const { generateFileName } = require('../utils/hash')
 const { getObjectSignedUrl, uploadFile, deleteFile } = require('../utils/s3')
+const debug = require('debug')('app:routes')
 
 const listGroups = async (req, res) => {
-  const groups = await Group.find().sort('-_createdAt').populate('members', 'email')
+  const groups = await Group.find().sort('-_createdAt').populate('members', 'email').lean()
   for (let group of groups) {
-    group.imageName && (group.imageUrl = await getObjectSignedUrl(group.imageName))
+    if (group.imageName) group.imageUrl = await getObjectSignedUrl(group.imageName)
   }
 
   res.send(groups)
@@ -16,7 +17,9 @@ const listGroups = async (req, res) => {
 const createGroup = async (req, res) => {
   const { error } = validate(req.body)
   if (error) return handler.validationErr(res, error)
-  // if (error) return res.status(400).send({ message: error.details[0].message })
+  if (error) return res.status(400).send({ message: error.details[0].message })
+
+  debug(req.file)
 
   let imageName
   if (req.file?.buffer) {
