@@ -2,9 +2,11 @@ const notFound = (res, doc) =>
   res.status(404).send({ message: `No ${doc ? doc : 'object'} found with the given ID.` })
 
 const response = (res, query, props) => {
-  if (!query) return notFound(res, 'groups')
+  if (!query) return notFound(res)
   return res.send(props ? props : query)
 }
+
+const validationErr = (res, error) => res.status(400).send({ message: error.details[0].message })
 
 const list = (Doc) => async (req, res) => {
   const query = await Doc.find()
@@ -22,7 +24,7 @@ const getOne = (Doc) => async (req, res) => {
 }
 
 const updateOne = (Doc) => async (req, res) => {
-  const query = await Doc.findByIdAndUpdate(req.params.id, req.body, { new: true })
+  const query = await Doc.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true })
   return response(res, query, {
     _id: query._id,
     _updatedAt: query._updatedAt,
@@ -36,4 +38,4 @@ const deleteOne = (Doc) => async (req, res) => {
   return res.sendStatus(204)
 }
 
-module.exports = { notFound, response, list, createOne, getOne, updateOne, deleteOne }
+module.exports = { notFound, response, validationErr, list, createOne, getOne, updateOne, deleteOne }

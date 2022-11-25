@@ -8,9 +8,9 @@ module.exports = () => {
   // getOne()
 
   async function updateRp() {
-    const group = await Group.findOne().populate('participants', ['_id', 'email'])
-    group.participants[0].email = 'admin@m.com'
-    group.participants[0].save((error) => error && console.log(error))
+    const group = await Group.findOne().populate('members', ['_id', 'email'])
+    group.members[0].email = 'admin@m.com'
+    group.members[0].save((error) => error && console.log(error))
     console.log(group)
   }
   //updateRp()

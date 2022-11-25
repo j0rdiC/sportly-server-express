@@ -15,8 +15,9 @@ router.route('/me')
 const { Group } = require('../models/group')
 
 router.get('/me/groups', auth, async (req, res) => {
-  const groups = await Group.find({ participants: req.user._id })
-  if (!groups) return res.status(400).send({ message: 'User does not belong to any group.' })
+  const groups = await Group.find({ members: req.user._id })
+  if (!groups) return res.status(404).send({ message: 'User does not belong to any group.' })
+
   return res.send(groups)
 })
 

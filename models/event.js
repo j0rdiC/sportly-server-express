@@ -1,10 +1,8 @@
-const {
-  Schema,
-  Types: { ObjectId },
-  model,
-} = require('mongoose')
+const { Schema, model } = require('mongoose')
+const { ObjectId } = Schema.Types
+const Joi = require('joi')
 
-const eventSchema = new Schema({
+const eventSchema = Schema({
   name: String,
   location: String,
   levels: [{ type: String, enum: ['begginer', 'amateur', 'pro'] }],

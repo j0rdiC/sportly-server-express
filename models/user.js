@@ -3,7 +3,7 @@ const Joi = require('joi')
 const jwt = require('jsonwebtoken')
 const config = require('config')
 
-const userSchema = Schema(
+const userSchema = new Schema(
   {
     email: { type: String, required: true, unique: true },
     password: { type: String, required: true, minlength: 5, maxlength: 1024 },
@@ -16,9 +16,12 @@ const userSchema = Schema(
     location: String,
     groupPreference: { type: String, enum: ['friendly', 'competitive'] },
     isPremium: { type: Boolean, default: false },
-
     isAdmin: { type: Boolean, default: false },
-    refreshToken: String,
+
+    refreshToken: new Schema({
+      iv: { type: String, required: true },
+      content: { type: String, required: true },
+    }),
   },
 
   {
@@ -26,23 +29,25 @@ const userSchema = Schema(
       createdAt: '_createdAt',
       updatedAt: '_updatedAt',
     },
+
+    methods: {
+      generateAccessToken: function () {
+        return jwt.sign(
+          {
+            _id: this._id,
+            isAdmin: this.isAdmin,
+          },
+          config.get('jwtAKey'),
+          { expiresIn: '7d' }
+        )
+      },
+
+      generateRefreshToken: function () {
+        return jwt.sign({ _id: this._id }, config.get('jwtRKey'), { expiresIn: '30s' })
+      },
+    },
   }
 )
-
-userSchema.methods.generateAccessToken = function () {
-  return jwt.sign(
-    {
-      _id: this._id,
-      isAdmin: this.isAdmin,
-    },
-    config.get('jwtKey'),
-    { expiresIn: '7d' }
-  )
-}
-
-userSchema.methods.generateRefreshToken = function () {
-  return jwt.sign({ _id: this._id }, config.get('jwtKey'), { expiresIn: '90d' })
-}
 
 const User = model('User', userSchema)
 

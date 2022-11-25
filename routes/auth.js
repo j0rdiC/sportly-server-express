@@ -1,8 +1,9 @@
 const router = require('express').Router()
-const { handleRefreshToken, loginUser, registerUser } = require('../controllers/auth-control')
+const auth = require('../middleware/auth')
+const { loginUser, registerUser, refreshUser } = require('../controllers/auth-control')
 
 router.post('/', loginUser)
 router.post('/register', registerUser)
-router.post('/refresh', handleRefreshToken)
+router.post('/refresh', refreshUser)
 
 module.exports = router

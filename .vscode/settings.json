@@ -1,4 +1,3 @@
-// Workspace settings
 {
     "files.exclude": {
         // Python
@@ -7,7 +6,7 @@
 
         // Node
         "**/node_modules": true,
-        "*/package-lock.json":true
+        "**/package-lock.json":true
 
     },
     "python.analysis.typeCheckingMode": "basic"

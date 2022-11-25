@@ -1,5 +1,6 @@
 const router = require('express').Router()
 const auth = require('../middleware/auth')
+const vId = require('../middleware/validate-object-id')
 const { image } = require('../middleware/img-upload')
 const {
   listGroups,
@@ -10,7 +11,6 @@ const {
   joinGroup,
   leaveGroup,
 } = require('../controllers/groups-control')
-const validateId = require('../middleware/validate-id')
 
 // prettier-ignore
 router.route('/')
@@ -19,13 +19,13 @@ router.route('/')
 
 // prettier-ignore
 router.route('/:id')
-  .get(validateId ,getGroup)
-  .put([auth, image], updateGroup)
-  .delete(auth, deleteGroup)
+  .get(vId, getGroup)
+  .put([auth, vId, image], updateGroup)
+  .delete([auth, vId], deleteGroup)
 
 // prettier-ignore
 router.route('/:id/join')
-  .put(auth, joinGroup)
-  .delete(auth, leaveGroup)
+  .put([auth, vId], joinGroup)
+  .delete([auth, vId], leaveGroup)
 
 module.exports = router

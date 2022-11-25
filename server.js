@@ -2,6 +2,9 @@ require('dotenv').config()
 const debug = require('debug')('app:startup')
 const app = require('express')()
 
+const config = require('config')
+debug(config.get('name'))
+
 require('./startup/logging')()
 require('./startup/middleware')(app)
 
@@ -18,8 +21,6 @@ app.get('/test/query', (req, res) => {
   res.send(req.query)
 })
 
-const config = require('config')
-
 require('./startup/routes')(app)
 require('./startup/database')()
 require('./startup/config')()
@@ -29,6 +30,6 @@ const python = require('./utils/python')
 // python('hello.py', [10, 15])
 
 const port = process.env.PORT || 8000
-const server = app.listen(port, () => debug(`Server running on http://localhost:${port}`))
+const server = app.listen(port, () => debug(`Server running on port ${port}`))
 
 module.exports = server
