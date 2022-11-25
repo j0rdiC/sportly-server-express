@@ -14,6 +14,7 @@ const secretKey = crypto.randomBytes(32)
 
 const encrypt = (data) => {
   const iv = crypto.randomBytes(16)
+
   const cipher = crypto.createCipheriv(algorithm, secretKey, iv)
   const encrypted = Buffer.concat([cipher.update(data), cipher.final()])
 

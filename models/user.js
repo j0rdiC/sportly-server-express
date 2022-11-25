@@ -18,10 +18,10 @@ const userSchema = new Schema(
     isPremium: { type: Boolean, default: false },
     isAdmin: { type: Boolean, default: false },
 
-    refreshToken: new Schema({
-      iv: { type: String, required: true },
-      content: { type: String, required: true },
-    }),
+    refreshToken: {
+      iv: String,
+      content: String,
+    },
   },
 
   {
@@ -43,7 +43,7 @@ const userSchema = new Schema(
       },
 
       generateRefreshToken: function () {
-        return jwt.sign({ _id: this._id }, config.get('jwtRKey'), { expiresIn: '30s' })
+        return jwt.sign({ _id: this._id }, config.get('jwtRKey'), { expiresIn: '90d' })
       },
     },
   }
