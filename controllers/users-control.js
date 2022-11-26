@@ -12,7 +12,7 @@ const listUsers = async (req, res) => {
 }
 
 const getUser = async (req, res) => {
-  const user = await User.findById(req.user._id).lean()
+  const user = await User.findById(req.user._id).select('-password').lean()
   if (user.imageName) user.imageUrl = await getObjectSignedUrl(user.imageName)
 
   res.send(_.pick(user, ['_id', 'email', 'firstName', 'lastName', 'imageUrl', '_createdAt']))

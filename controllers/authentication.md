@@ -1,4 +1,4 @@
-# JWT authentication, access and refresh tokens.
+# JWT authentication management with access and refresh tokens. Server and client side.
 
 ## **Index**
 
@@ -7,13 +7,16 @@
    2. [Registering the user.](#12-registering-the-user)
    3. [Authenticating the user.](#13-authenticating-the-user-login)
    4. [Refreshing the access token.](#14-refreshing-the-access-token)
-   5. [Authentication router.](#15-authentication-router)
+   5. [Authentication end points.](#15-authentication-router)
    6. [Protecting end points.](#16-protecting-end-points)
    7. [Accessing protected end points.](#17-accessing-protected-end-points)
    8. [Deleting expired refresh tokens.](#18-deleting-expired-refresh-tokens)
 2. [**Client side.**](#2-client-side) (expo, axios, expo-secure-store).
    1. [Axios interceptor.](#21-axios-interceptor)
    2. [Storing the tokens.](#22-local-storage-with-expo-secure-store)
+   3. [App entry point.](#23-app-entry-point)
+   4. [Custom auth hook.](#24-custom-auth-hook)
+   5. [Custom useApi hook.](#25-custom-useapi-hook)
 
 ---
 
@@ -22,10 +25,10 @@
 ### **1.1 Defining the user model.**
 
 - Define the **user schema** which will include the generate access and refresh token methods.
-- Define a **validation schema** for the user registration with the Joi library.
-- The [mongoose Schema class](https://www.mongoosejs.cn/docs/guide.html#methods) takes an options object as its second argument where we can define this methods.
+- The [mongoose Schema class](https://mongoosejs.com/docs/guide.html) takes an options object as its second argument where we can define this [methods](https://www.mongoosejs.cn/docs/guide.html#methods).
 - The **generateAcessToken** method will generate a JWT with the user id and the user role as the payload.
 - The **generateRefreshToken** method will generate a JWT with the user id as the payload and save the token in the database.
+- Define a **validation schema** for the user registration with the Joi library.
 - If we wanted the users to be able to login from multiple devices we would save the refresh tokens in an array and change the implementation.
 
 ```js
@@ -154,12 +157,12 @@ const loginUser = async (req, res) => {
 ### **1.4 Refreshing the access token.**
 
 - Validate the refresh token.
-- Decode the refresh token to get the user id.
 - If the refresh token is invalid / expired the client should login again.
+- Decode the refresh token to get the user id.
 - Check if the user exists.
 - Generate new access and refresh tokens (remember the refresh token will be saved in the database).
-- Since this is for a mobile app only one device will be used to login, so we can overwrite the refresh token in the database.
-- By doing this we invalidate the previous refresh token. This is a good practice to avoid security issues. Also known as blacklisting.
+- Since this is for a mobile app only **one device** will be used to login, so we can **overwrite the refresh token** in the database.
+- By doing this we invalidate the previous refresh token. This is a good practice to avoid security issues. Also known as **blacklisting**.
 - Again if we wanted to access the server from multiple devices we would change the implementation.
 
 ```js
@@ -239,18 +242,16 @@ module.exports = (req, res, next) => {
 - A nice end point to interact with the current logged in user ".../api/users/me".
 - You can imagine how the other http methods are implemented.
 - Note that we are using the user id from the request object. This is possible because we decoded the token in the authentication middleware.
-- Also note when listing the users and using the admin middleware it is placed after the authentication in the array.
+- Also note when listing the users and using the admin middleware it is placed after the authentication middleware in the array.
 
 ```js
-// --- Controller ---
+// Controller
 const getUser = async (req, res) => {
-  const user = await User.findById(req.user._id)
-  if (!user) return res.status(404).send({ message: 'User not found.' })
-
-  res.send(_.pick(user, ['_id', 'email', 'firstName', 'lastName', '_createdAt']))
+  const user = await User.findById(req.user._id).select('-password')
+  res.send(user)
 }
 
-// --- Router ---
+// Router
 const router = require('express').Router()
 const auth = require('../middleware/auth')
 const admin = require('../middleware/admin')
@@ -260,17 +261,13 @@ router.get('/', [auth, admin], listUsers)
 // prettier-ignore
 router.route('/me')
   .get(auth, getUser)
-  .put(auth, updateUser)
+  .put([auth, image], updateUser)
   .delete(auth, deleteUser)
 
-module.exports = router
-
-// --- Startup ---
+// Startup
 app.use('/api/auth', require('../routes/auth'))
 app.use('/api/users', require('../routes/users'))
 ```
-
-Sorry for the prettier-ignore, but it's actually necessary.
 
 ---
 
@@ -278,7 +275,7 @@ Sorry for the prettier-ignore, but it's actually necessary.
 
 - In order to clear the database from expired refresh tokens we can use a cron job.
 - This can be a good idea for future queries and security reasons.
-- Note that async callbacks in [forEach loops may cause unexpected results](https://www.geeksforgeeks.org/difference-between-foreach-and-for-loop-in-javascript/) (javascript...).
+- Note that [async callbacks in forEach loops](https://www.geeksforgeeks.org/difference-between-foreach-and-for-loop-in-javascript/) may cause unexpected results (javascript...).
 - Use a for loop instead.
 
 ```js
@@ -340,7 +337,7 @@ const baseClient = axios.create({
 baseClient.interceptors.request.use(
   async (config) => {
     const { access } = await authStorage.getTokens()
-    if (!access) return
+    if (!access) return // TODO: logout
 
     config.headers['Authorization'] = access
 
@@ -356,13 +353,12 @@ baseClient.interceptors.response.use(
     if (!valid) return // TODO: logout
 
     const prevRequest = error.config
-    // !prevReq.sent to avoid infinit loop
+
     if (error.response.status === 401 && !prevRequest.sent) {
       prevRequest.sent = true
 
       const newAccessToken = await updateAccessToken()
-
-      if (!newAccessToken) return // should logout user
+      if (!newAccessToken) return // TODO: logout
 
       baseClient.defaults.headers.common['Authorization'] = newAccessToken
 
@@ -405,7 +401,7 @@ const storeTokens = async (tokens) => {
   try {
     await SecureStore.setItemAsync(key, JSON.stringify(tokens))
   } catch (error) {
-    console.log('Error storing the auth token', error)
+    console.log('Error storing the auth tokens', error)
   }
 }
 
@@ -413,7 +409,7 @@ const getTokens = async () => {
   try {
     return JSON.parse(await SecureStore.getItemAsync(key))
   } catch (error) {
-    console.log('Error getting the auth token', error)
+    console.log('Error getting the auth tokens', error)
   }
 }
 
@@ -431,7 +427,7 @@ const removeTokens = async () => {
   try {
     await SecureStore.deleteItemAsync(key)
   } catch (error) {
-    console.log('Error removing the auth token', error)
+    console.log('Error removing the auth tokens', error)
   }
 }
 
@@ -440,7 +436,7 @@ const validateToken = (token) => {
     const decoded = jwtDecode(token)
     return decoded.exp > Date.now() / 1000
   } catch (error) {
-    console.log('Error validating the token', error)
+    console.log('Error validating the tokens', error)
   }
 }
 
@@ -470,4 +466,149 @@ export default {
   getAccessTokenValidity,
   getRefreshTokenValidity,
 }
+```
+
+---
+
+### **2.3 App entry point.**
+
+- The app entry point is a good place to check if the user is logged in and to check if the refresh token expired.
+- If everything is **ok**, the **app navigator** will be rendered.
+- If **not**, the **authentication navigator** will be rendered.
+- Remember the getUser function returns the decoded access token with the user info.
+- I am using **react context** to pass the user info around the app.
+- In this case it only contains the user id and role. But you can add more properties if you want.
+
+```javascript
+export default App = () => {
+  const [user, setUser] = useState()
+
+  const restoreUser = async () => {
+    const user = await authStorage.getUser()
+    if (user) setUser(user)
+  }
+
+  useEffect(() => {
+    restoreUser()
+  }, [])
+
+  return (
+    <AuthContext.Provider value={{ user, setUser }}>
+      <AppContainer>
+        {user ? <AppNavigator /> : <AuthNavigator />}
+        <StatusBar style={useColorModeValue('dark', 'light')} />
+      </AppContainer>
+    </AuthContext.Provider>
+```
+
+---
+
+### **2.4 Custom auth hook.**
+
+- I created a custom hook to manage the authentication state of the app.
+- It is used **login** or **logout** the user anywhere in the app.
+- The **logIn** function will store the tokens in the local storage and set the user in the context.
+- The **logOut** function will remove the tokens from the local storage and remove the user from the context.
+- It returns the **user** object and the **login** and **logout** functions.
+
+```javascript
+export default useAuth = () => {
+  const { user, setUser } = useContext(AuthContext)
+
+  const logIn = (tokens) => {
+    const userInfo = jwtDecode(tokens.access)
+    setUser(userInfo)
+    authStorage.storeTokens(tokens)
+  }
+
+  const logOut = () => {
+    setUser(null)
+    authStorage.removeTokens()
+  }
+
+  return { user, logIn, logOut }
+}
+```
+
+- Example of use in the login screen.
+- If the response is successful, the **logIn** function is called with the tokens as an argument.
+
+```javascript
+import authApi from '../../api/auth'
+import useAuth from '../../auth/useAuth'
+
+export default LoginScreen = ({ navigation }) => {
+  const auth = useAuth()
+  const loginApi = useApi(authApi.login)
+
+  const handleSubmit = async ({ email, password }) => {
+    const res = await loginApi.request(email, password)
+
+    if (!res.ok)
+      return res.status
+        ? loginApi.setError(res.data.message)
+        : loginApi.setError('An unexpected error ocurred.')
+
+    auth.logIn(res.data)
+  }
+```
+
+- Here is the login api function.
+
+```javascript
+const login = (email, password) => openClient.post('/auth', { email, password })
+```
+
+---
+
+### **2.5 Custom useApi hook.**
+
+- The useApi hook comes very handy whenever you want to call apis and save the data in the state.
+- I used it before even though I am not saving data in the state. I just want my app to have the same structure all over.
+- In my opinion, components should not handle the logic of making api calls.
+- It may be a bit confusing at first but I really like to have a separation of concerns.
+- It is also easier to debug in the future.
+
+```javascript
+export default useApi = (apiFunction) => {
+  const [data, setData] = useState()
+  const [error, setError] = useState(false)
+  const [loading, setLoading] = useState(false)
+
+  const request = async (...args) => {
+    setLoading(true)
+    const response = await apiFunction(...args)
+    setLoading(false)
+
+    setError(!response.ok)
+    setData(response.data)
+    return response
+  }
+
+  return { data, error, setError, loading, request }
+}
+```
+
+- Example of use.
+- As you can see there is no need to create states for loading, data, error, etc.
+- Just one simple line of code and you are good to go.
+
+```javascript
+export default AccountScreen = ({ navigation }) => {
+  const { data: user, request, loading } = useApi(usersApi.getUser)
+
+  useEffect(() => {
+    request()
+  }, [])
+
+  console.log(user.firstName)
+
+```
+
+- Here is the getUser function.
+- This is a protected route in my server as mentioned before.
+- So I am using the axios interceptor instance created in the previous section.
+
+```javascript
+const getUser = () => privateClient.get('/users/me')
 ```
