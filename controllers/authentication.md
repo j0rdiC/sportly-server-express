@@ -15,7 +15,7 @@
    1. [Axios interceptor.](#21-axios-interceptor)
    2. [Storing the tokens.](#22-local-storage-with-expo-secure-store)
    3. [App entry point.](#23-app-entry-point)
-   4. [Custom auth hook.](#24-custom-auth-hook)
+   4. [Managing the authentication state.](#24-managing-the-authentication-state)
    5. [Custom useApi hook.](#25-custom-useapi-hook)
 
 ---
@@ -503,7 +503,7 @@ export default App = () => {
 
 ---
 
-### **2.4 Custom auth hook.**
+### **2.4 Managing the authentication state.**
 
 - I created a custom hook to manage the authentication state of the app.
 - It is used **login** or **logout** the user anywhere in the app.
@@ -590,8 +590,7 @@ export default useApi = (apiFunction) => {
 ```
 
 - Example of use.
-- As you can see there is no need to create states for loading, data, error, etc.
-- Just one simple line of code and you are good to go.
+- As you can see there is no need to create states for data, loading, error, etc.
 
 ```javascript
 export default AccountScreen = ({ navigation }) => {
