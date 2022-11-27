@@ -120,6 +120,13 @@ const registerUser = async (req, res) => {
 }
 ```
 
+- The main purpose of validating the input with Joi, even tho the mongoose model has validation itself, is so that we don't reach the database if the input is invalid.
+- It also allows us to send a more specific error message to the client.
+
+```js
+const validationErr = (res, error) => res.status(400).send({ message: error.details[0].message })
+```
+
 ---
 
 ### **1.3 Authenticating the user**. (login)
@@ -180,8 +187,6 @@ const refreshUser = async (req, res) => {
   })
 }
 ```
-
-I see a lot of people checking if the refresh token of the user is the same as the one in the request, but I think this is not necessary since json web tokens guarantee uniqueness and the user can only have one refresh token at a time.
 
 ---
 
@@ -244,6 +249,7 @@ module.exports = (req, res, next) => {
 - Note that we are using the user id from the request object. This is possible because we decoded the token in the authentication middleware.
 - Also note when listing the users and using the admin middleware it is placed after the authentication middleware in the array.
 
+<!-- prettier-ignore -->
 ```js
 // Controller
 const getUser = async (req, res) => {
@@ -258,7 +264,6 @@ const admin = require('../middleware/admin')
 
 router.get('/', [auth, admin], listUsers)
 
-// prettier-ignore
 router.route('/me')
   .get(auth, getUser)
   .put([auth, image], updateUser)
@@ -472,12 +477,12 @@ export default {
 
 ### **2.3 App entry point.**
 
-- The app entry point is a good place to check if the user is logged in and to check if the refresh token expired.
+- The app entry point is where the authentication flow starts
+- Check if the user is logged in (has tokens in storage) and if the refresh token has expired.
 - If everything is **ok**, the **app navigator** will be rendered.
 - If **not**, the **authentication navigator** will be rendered.
 - Remember the getUser function returns the decoded access token with the user info.
-- I am using **react context** to pass the user info around the app.
-- In this case it only contains the user id and role. But you can add more properties if you want.
+- I am using **react context to manage the authentication state** and pass the user info around the app.
 
 ```javascript
 export default App = () => {
@@ -506,10 +511,10 @@ export default App = () => {
 ### **2.4 Managing the authentication state.**
 
 - I created a custom hook to manage the authentication state of the app.
-- It is used **login** or **logout** the user anywhere in the app.
+- It is used to **login** or **logout** the user from anywhere in the app.
 - The **logIn** function will store the tokens in the local storage and set the user in the context.
 - The **logOut** function will remove the tokens from the local storage and remove the user from the context.
-- It returns the **user** object and the **login** and **logout** functions.
+- Hence **redirecting the user** to the auth navigator (login and register screens).
 
 ```javascript
 export default useAuth = () => {
@@ -530,8 +535,8 @@ export default useAuth = () => {
 }
 ```
 
-- Example of use in the login screen.
-- If the response is successful, the **logIn** function is called with the tokens as an argument.
+- **Example of use** in the login screen.
+- If the response is **successful**, the **logIn** function is called with the tokens as an argument.
 
 ```javascript
 import authApi from '../../api/auth'
@@ -563,8 +568,8 @@ const login = (email, password) => openClient.post('/auth', { email, password })
 
 ### **2.5 Custom useApi hook.**
 
-- The useApi hook comes very handy whenever you want to call apis and save the data in the state.
-- I used it before even though I am not saving data in the state. I just want my app to have the same structure all over.
+- The useApi hook comes very handy whenever you want to call apis and save the data in the state of a component.
+- I used it in the example above even though I am not saving data in the state. I just want my app to have the same structure all over.
 - In my opinion, components should not handle the logic of making api calls.
 - It may be a bit confusing at first but I really like to have a separation of concerns.
 - It is also easier to debug in the future.
@@ -582,6 +587,7 @@ export default useApi = (apiFunction) => {
 
     setError(!response.ok)
     setData(response.data)
+
     return response
   }
 
@@ -589,24 +595,24 @@ export default useApi = (apiFunction) => {
 }
 ```
 
-- Example of use.
-- As you can see there is no need to create states for data, loading, error, etc.
+- **Example of use**.
+- As you can see there is **no need** to create **states** for data, loading, etc. Or even an async **function** to make the **api call**!
 
 ```javascript
-export default AccountScreen = ({ navigation }) => {
+export default AccountScreen = () => {
   const { data: user, request, loading } = useApi(usersApi.getUser)
 
   useEffect(() => {
     request()
   }, [])
 
-  console.log(user.firstName)
+  return <Text>Hello {user.firstName}!</Text>
 
 ```
 
 - Here is the getUser function.
 - This is a protected route in my server as mentioned before.
-- So I am using the axios interceptor instance created in the previous section.
+- So I am using the axios interceptor instance created in section [2.1](#21-axios-interceptor).
 
 ```javascript
 const getUser = () => privateClient.get('/users/me')
