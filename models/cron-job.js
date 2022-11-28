@@ -8,19 +8,37 @@ const cron = require('node-cron')
 // check if the token is expired
 // if expired, delete the token
 
-// make it a cron job to run every 24h
+// const deleteExpiredRefreshTokens = async () => {
+//   const users = await User.find({ refreshTokens: { $exists: true } })
+
+//   // using async callbacks in forEach loops may cause unexpected results.
+//   // use for loop instead
+
+//   for (let user of users) {
+//     jwt.verify(user.refreshTokens, config.get('jwtRKey'), async (err, decoded) => {
+//       if (err) await user.deleteOne({ refreshToken })
+//     })
+//   }
+// }
+
+// deleteExpiredRefreshTokens()
+
+// make this a cron functinon
+// get all users
+// for each user, check if the token in the refreshTokens array is expired
+// if expired, delete the token in the array
 
 const deleteExpiredRefreshTokens = async () => {
-  const users = await User.find({ refreshToken: { $exists: true } })
-
-  // using async callbacks in forEach loops may cause unexpected results.
-  // use for loop instead
+  const users = await User.find({ refreshTokens: { $exists: true } })
 
   for (let user of users) {
-    jwt.verify(user.refreshToken, config.get('jwtRKey'), async (err, decoded) => {
-      if (err) await user.deleteOne({ refreshToken })
-    })
+    for (let token of user.refreshTokens) {
+      jwt.verify(token, config.get('jwtRKey'), async (err, decoded) => {
+        if (err) {
+          user.refreshTokens.pull(token)
+          await user.save()
+        }
+      })
+    }
   }
 }
-
-deleteExpiredRefreshTokens()

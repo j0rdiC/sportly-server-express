@@ -18,7 +18,8 @@ const userSchema = new Schema(
     isPremium: { type: Boolean, default: false },
     isAdmin: { type: Boolean, default: false },
 
-    refreshToken: String,
+    refreshTokens: [String],
+    numOfDevices: { type: Number, default: 5 },
   },
 
   {
@@ -52,10 +53,34 @@ const userSchema = new Schema(
       generateRefreshToken: async function () {
         const token = jwt.sign({ _id: this._id }, config.get('jwtRKey'), { expiresIn: '90d' })
 
-        this.refreshToken = token
+        if (this.refreshTokens.length >= this.numOfDevices) this.refreshTokens.shift()
+
+        this.refreshTokens.push(token)
         await this.save()
 
         return token
+      },
+
+      handleRefreshToken: async function (token) {
+        const newToken = jwt.sign({ _id: this._id }, config.get('jwtRKey'), { expiresIn: '90d' })
+
+        if (this.refreshTokens.includes(token)) {
+          const i = this.refreshTokens.indexOf(token)
+          this.refreshTokens[i] = newToken
+        } else if (this.refreshTokens.length >= this.numOfDevices) {
+          this.refreshTokens.shift()
+          this.refreshTokens.push(newToken)
+        } else this.refreshTokens.push(newToken)
+
+        await this.save()
+
+        return newToken
+      },
+
+      deleteRefreshToken: async function (token) {
+        const i = this.refreshTokens.indexOf(token)
+        this.refreshTokens.splice(i, 1)
+        await this.save()
       },
     },
   }

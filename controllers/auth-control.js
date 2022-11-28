@@ -45,16 +45,33 @@ const loginUser = async (req, res) => {
 }
 
 const refreshUser = async (req, res) => {
-  jwt.verify(req.body.refresh, config.get('jwtRKey'), async (err, decoded) => {
-    if (err) return res.status(403).send({ message: `Refresh ${capitalize(err.message)}.` })
+  const { refresh } = req.body
+
+  jwt.verify(refresh, config.get('jwtRKey'), async (err, decoded) => {
+    if (err) return res.status(403).send({ message: `Refresh ${err.message}.` })
 
     const user = await User.findById(decoded._id)
-    if (!user) return res.status(403).send({ message: 'Invalid refresh token.' })
+
+    if (!user || !user.refreshTokens.includes(refresh))
+      return res.status(403).send({ message: 'Invalid refresh token.' })
 
     const access = user.generateAccessToken()
-    const refresh = await user.generateRefreshToken()
+    const newRefresh = await user.handleRefreshToken(refresh)
 
-    return res.send({ access, refresh })
+    res.send({ access, refresh: newRefresh })
+  })
+}
+
+const logoutUser = async (req, res) => {
+  const { refresh } = req.body
+
+  jwt.verify(refresh, config.get('jwtRKey'), async (err, decoded) => {
+    if (err) return res.status(403).send({ message: `Refresh ${err.message}.` })
+
+    const user = await User.findById(decoded._id)
+    await user.deleteRefreshToken(refresh)
+
+    res.sendStatus(204)
   })
 }
 

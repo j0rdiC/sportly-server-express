@@ -477,12 +477,12 @@ export default {
 
 ### **2.3 App entry point.**
 
-- The app entry point is where the authentication flow starts
-- Check if the user is logged in (has tokens in storage) and if the refresh token has expired.
+- The app entry point is where the authentication flow starts.
+- I am using **react context to manage the authentication state** and pass the user info around the app.
+- First check if the user is logged in (has tokens in storage) and if the refresh token has expired.
 - If everything is **ok**, the **app navigator** will be rendered.
 - If **not**, the **authentication navigator** will be rendered.
 - Remember the getUser function returns the decoded access token with the user info.
-- I am using **react context to manage the authentication state** and pass the user info around the app.
 
 ```javascript
 export default App = () => {
