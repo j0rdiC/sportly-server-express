@@ -16,5 +16,5 @@ module.exports = () => {
   })
 
   winston.add(new winston.transports.File({ filename: 'logfile.log', level: 'info' }))
-  winston.add(new winston.transports.File({ filename: 'error.log', level: 'error' }))
+  winston.add(new winston.transports.File({ filename: 'errors.log', level: 'error' }))
 }

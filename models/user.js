@@ -36,7 +36,7 @@ const userSchema = new Schema(
             isAdmin: this.isAdmin,
           },
           config.get('jwtAKey'),
-          { expiresIn: '30s' }
+          { expiresIn: '15m' }
         )
       },
 
@@ -51,7 +51,7 @@ const userSchema = new Schema(
       // or just delete the refresh token from the user document with cron job? better for performance
 
       generateRefreshToken: async function () {
-        const token = jwt.sign({ _id: this._id }, config.get('jwtRKey'), { expiresIn: '90d' })
+        const token = jwt.sign({ _id: this._id }, config.get('jwtRKey'), { expiresIn: '7d' })
 
         if (this.refreshTokens.length >= this.numOfDevices) this.refreshTokens.shift()
 
@@ -62,7 +62,7 @@ const userSchema = new Schema(
       },
 
       handleRefreshToken: async function (token) {
-        const newToken = jwt.sign({ _id: this._id }, config.get('jwtRKey'), { expiresIn: '90d' })
+        const newToken = jwt.sign({ _id: this._id }, config.get('jwtRKey'), { expiresIn: '7d' })
 
         if (this.refreshTokens.includes(token)) {
           const i = this.refreshTokens.indexOf(token)

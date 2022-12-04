@@ -28,4 +28,17 @@ router.route('/:id/join')
   .put([auth, vId], joinGroup)
   .delete([auth, vId], leaveGroup)
 
+const sortByDistance = require('../utils/distance')
+const { Group } = require('../models/group')
+
+router.get('/dist/near', async (req, res) => {
+  console.log(req.query)
+  const { lat, long } = req.query
+
+  const groups = await Group.find()
+  const sorted = sortByDistance(groups, lat, long)
+
+  res.send(sorted)
+})
+
 module.exports = router

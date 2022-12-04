@@ -5,7 +5,11 @@ const Joi = require('joi')
 const groupSchema = new Schema(
   {
     name: String,
-    location: String,
+    // location: String,
+    location: {
+      lat: Number,
+      long: Number,
+    },
     level: { type: String, enum: ['begginer', 'amateur', 'pro'] },
     type: { type: String, enum: ['friendly', 'competitive'] },
     isPrivate: { type: Boolean, default: false },

@@ -3,12 +3,22 @@ const handler = require('./request-handler')
 const { Group, validate } = require('../models/group')
 const { generateFileName } = require('../utils/hash')
 const { getObjectSignedUrl, uploadFile, deleteFile } = require('../utils/s3')
+const { sortByDistance, getDistanceInKm } = require('../utils/distance')
 const debug = require('debug')('app:routes')
 
 const listGroups = async (req, res) => {
   const groups = await Group.find().sort('-_createdAt').populate('members', 'email').lean()
+
   for (let group of groups) {
     if (group.imageName) group.imageUrl = await getObjectSignedUrl(group.imageName)
+  }
+
+  if (req.query.distance) {
+    const { lat, long } = req.query
+    for (let group of groups) {
+      group.distance = getDistanceInKm(lat, long, group.location.lat, group.location.long)
+    }
+    return res.send(sortByDistance(groups, lat, long))
   }
 
   res.send(groups)
@@ -17,9 +27,8 @@ const listGroups = async (req, res) => {
 const createGroup = async (req, res) => {
   const { error } = validate(req.body)
   if (error) return handler.validationErr(res, error)
-  if (error) return res.status(400).send({ message: error.details[0].message })
 
-  debug(req.file)
+  debug(req.body)
 
   let imageName
   if (req.file?.buffer) {
@@ -31,10 +40,11 @@ const createGroup = async (req, res) => {
   }
 
   const group = new Group({
+    ...req.body,
     admin: req.user._id,
     members: req.user._id,
+    location: JSON.parse(req.body.location),
     imageName,
-    ...req.body,
   })
   await group.save()
 
@@ -78,7 +88,7 @@ const deleteGroup = async (req, res) => {
 }
 
 const joinGroup = async (req, res) => {
-  const group = await Group.updateOne({ _id: req.params.id }, { $push: { members: req.user._id } })
+  const group = await Group.findByIdAndUpdate({ _id: req.params.id }, { $push: { members: req.user._id } })
   if (!group) return handler.notFound(res, 'group')
 
   res.send({ message: `Group ${group.name} joined!` })

@@ -387,6 +387,14 @@ const updateAccessToken = async () => {
 export default privateClient = create({ axiosInstance: baseClient })
 ```
 
+- This is what it would look like in the server.
+
+```
+GET /api/users/me 401 0.573 ms
+POST /api/auth/refresh 200 136.147 ms
+GET /api/users/me 200 81.137 ms
+```
+
 ---
 
 ### **2.2 Local storage with expo secure store.**

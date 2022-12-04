@@ -62,10 +62,12 @@ describe('/api/auth', () => {
     })
 
     it('should return 400 and a declarative message if user already exists', async () => {
-      const user = new User({ email: 'jordi@mail.com', password: '123456' })
+      const user = new User({ email, password })
       await user.save()
 
       const res = await exec()
+
+      console.log(res.body)
 
       expect(res.status).toBe(400)
       expect(res.body).toHaveProperty('message', 'User already registered.')
@@ -120,10 +122,10 @@ describe('/api/auth', () => {
     })
 
     it('should return 200 and tokens if email and password are valid', async () => {
-      const user = new User({ email: 'jordi@mail.com', password: '123456' })
+      const user = new User({ email: 'jo@m.com', password: '12345' })
       await user.save()
 
-      const res = await exec()
+      const res = await request(server).post('/api/auth').send({ email: 'j0@m.com', password: '12345' })
 
       console.log(user)
 
