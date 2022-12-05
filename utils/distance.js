@@ -6,6 +6,8 @@
 // where	φ is latitude, λ is longitude, R is earth’s radius (mean radius = 6,371km);
 // note that angles need to be in radians to pass to trig functions!
 
+const deg2rad = (deg) => deg * (Math.PI / 180)
+
 const getDistanceInKm = (lat1, lon1, lat2, lon2) => {
   const R = 6371 // Radius of the earth in km
   const dLat = deg2rad(lat2 - lat1)
@@ -19,7 +21,15 @@ const getDistanceInKm = (lat1, lon1, lat2, lon2) => {
   return d
 }
 
-const deg2rad = (deg) => deg * (Math.PI / 180)
+const sortByDistance = (collection, lat, long) => {
+  return collection.sort((a, b) => {
+    const distA = getDistanceInKm(lat, long, a.location.lat, a.location.long)
+    const distB = getDistanceInKm(lat, long, b.location.lat, b.location.long)
+    return distA - distB
+  })
+}
+
+module.exports = { sortByDistance, getDistanceInKm }
 
 // give me lat and lon of madrid, spain
 // give me lat and lon of barcelona, spain
@@ -55,13 +65,3 @@ const sorted = sortCities(cities, user.lat, user.lon)
 const distanceToBarcelonaInKm = getDistanceInKm(user.lat, user.lon, barcelona.lat, barcelona.lon)
 
 // console.log(distanceToBarcelonaInKm, 'km')
-
-const sortByDistance = (collection, lat, long) => {
-  return collection.sort((a, b) => {
-    const distA = getDistanceInKm(lat, long, a.location.lat, a.location.long)
-    const distB = getDistanceInKm(lat, long, b.location.lat, b.location.long)
-    return distA - distB
-  })
-}
-
-module.exports = { sortByDistance, getDistanceInKm }

@@ -6,22 +6,45 @@ const { getObjectSignedUrl, uploadFile, deleteFile } = require('../utils/s3')
 const { sortByDistance, getDistanceInKm } = require('../utils/distance')
 const debug = require('debug')('app:routes')
 
-const listGroups = async (req, res) => {
-  const groups = await Group.find().sort('-_createdAt').populate('members', 'email').lean()
+const addImg = async (collection) => {
+  for (let doc of collection) {
+    if (doc.imageName) doc.imageUrl = await getObjectSignedUrl(doc.imageName)
+  }
+}
 
-  for (let group of groups) {
-    if (group.imageName) group.imageUrl = await getObjectSignedUrl(group.imageName)
+const addImgAndDistance = async (collection, lat, long) => {
+  for (let doc of collection) {
+    if (doc.imageName) doc.imageUrl = await getObjectSignedUrl(doc.imageName)
+    doc.distance = getDistanceInKm(lat, long, doc.location.lat, doc.location.long)
+  }
+}
+
+const listGroups = async (req, res) => {
+  const { sort } = req.query
+
+  let groups = await Group.find().sort('-_createdAt').populate('members', 'email').lean()
+
+  if (sort === 'all') {
+    await addImg(groups)
+    return res.send(groups)
   }
 
-  if (req.query.distance) {
+  if (sort === 'distance') {
     const { lat, long } = req.query
-    for (let group of groups) {
-      group.distance = getDistanceInKm(lat, long, group.location.lat, group.location.long)
-    }
+    await addImgAndDistance(groups, lat, long)
     return res.send(sortByDistance(groups, lat, long))
   }
 
-  res.send(groups)
+  if (sort?.includes('level')) {
+    groups = groups.filter((group) => group.level === req.query.level)
+    if (sort.includes('distance')) {
+      const { lat, long } = req.query
+      await addImgAndDistance(groups, lat, long)
+      return res.send(sortByDistance(groups, lat, long))
+    }
+    await addImg(groups)
+    return res.send(groups)
+  }
 }
 
 const createGroup = async (req, res) => {
